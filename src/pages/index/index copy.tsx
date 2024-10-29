@@ -20,6 +20,14 @@ import {
 
 import "./index.scss";
 
+// #region 书写注意
+//
+// 目前 typescript 版本还无法在装饰器模式下将 Props 注入到 Taro.Component 中的 props 属性
+// 需要显示声明 connect 的参数类型并通过 interface 的方式指定 Taro.Component 子类的 props
+// 这样才能完成类型检查和 IDE 的自动提示
+// 使用函数模式则无此限制
+// ref: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/20796
+
 type PageStateProps = {
   song: songType;
   counter: {
@@ -67,6 +75,7 @@ interface Index {
   props: IProps;
 }
 
+// @injectPlaySong()
 @connect(({ song }) => ({
     song: song,
     recommendPlayList: song.recommendPlayList,
@@ -131,6 +140,7 @@ class Index extends Component<IProps, PageState> {
   }
 
   switchTab(value) {
+  
     switch (value) {
       case 0:
         Taro.reLaunch({
@@ -147,23 +157,37 @@ class Index extends Component<IProps, PageState> {
           url: "/pages/my/index"
         });
         break;
+    
       default:
         break;
     }
+    
   }
 
+  /**
+   * 获取推荐歌单
+   */
   getPersonalized() {
     this.props.getRecommendPlayList();
   }
 
+  /**
+   * 获取推荐新音乐
+   */
   getNewsong() {
     this.props.getRecommendNewSong();
   }
 
+  /**
+   * 获取推荐电台
+   */
   getDjprogram() {
     this.props.getRecommendDj();
   }
 
+  /**
+   * 获取推荐节目
+   */
   getRecommend() {
     this.props.getRecommend();
   }
@@ -196,6 +220,9 @@ class Index extends Component<IProps, PageState> {
   }
 
   goPage() {
+    // Taro.navigateTo({
+    //   url: `/pages/${pageName}/index`
+    // })
     Taro.showToast({
       title: "正在开发中，敬请期待",
       icon: "none"
@@ -203,6 +230,10 @@ class Index extends Component<IProps, PageState> {
   }
 
   goDjDetail(item) {
+    // Taro.showToast({
+    //   title: '暂未实现，敬请期待',
+    //   icon: 'none'
+    // })
     Taro.navigateTo({
       url: `/pages/packageA/pages/djprogramListDetail/index?id=${item.id}&name=${item.name}`
     });
@@ -214,34 +245,21 @@ class Index extends Component<IProps, PageState> {
     });
   }
 
-  navigateToPage = (url) => {
+  navigateToMy = () => {
     Taro.navigateTo({
-      url: url
+      url: '/pages/my/index'
     });
   }
-
   render() {
+     
     const { showLoading } = this.state;
-
+     
     return (
       <View>
         <CLoading fullPage={true} hide={!showLoading} />
-        这是首页
-        {[
-          { url: '/pages/packageA/pages/videoDetail/index', label: 'VideoDetail' },
-          { url: '/pages/packageA/pages/djprogramListDetail/index', label: 'DjprogramListDetail' },
-          { url: '/pages/packageA/pages/search/index', label: 'Search' },
-          { url: '/pages/packageA/pages/searchResult/index', label: 'SearchResult' },
-          { url: '/pages/packageA/pages/songDetail/index', label: 'SongDetail' },
-          { url: '/pages/packageA/pages/playListDetail/index', label: 'PlayListDetail' },
-          { url: '/pages/packageA/pages/login/index', label: 'Login' },
-          { url: '/pages/packageA/pages/myFans/index', label: 'MyFans' },
-          { url: '/pages/packageA/pages/myFocus/index', label: 'MyFocus' },
-          { url: '/pages/packageA/pages/myEvents/index', label: 'MyEvents' },
-          { url: '/pages/packageA/pages/recentPlay/index', label: 'RecentPlay' }
-        ].map((page, index) => (
-          <Button key={index} onClick={() => this.navigateToPage(page.url)}>{page.label}</Button>
-        ))}
+        这是首页1234
+        
+        <Button onClick={this.navigateToMy.bind(this)}>Navigate To My</Button>
         
         <AtTabBar
           fixed

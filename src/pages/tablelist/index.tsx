@@ -16,7 +16,7 @@ class TableList extends Component {
   render() {
     return (
       <View className='page-tablelist'> 
-        这是列表页
+        这是列表页23
       </View>
     );
   }
