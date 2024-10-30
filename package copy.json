@@ -80,6 +80,7 @@
   },
   "husky": {
     "hooks": {
+      "commit-msg": "node scripts/verify-commit-msg.js"
     }
   },
   "repository": "git@github.com:fe-seed/charging-pile.git"

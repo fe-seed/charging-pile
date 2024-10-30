@@ -212,6 +212,7 @@ class Index extends Component<IProps, PageState> {
       <View>
         <CLoading fullPage={true} hide={!showLoading} />
         这是首页23
+        
 
         {phoneNumber ? (
           <Text>手机号: {phoneNumber}</Text>
