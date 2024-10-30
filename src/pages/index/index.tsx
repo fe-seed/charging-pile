@@ -1,14 +1,10 @@
 import Taro from "@tarojs/taro";
 import { Component } from "react";
-import { View, Image, Text, Swiper, SwiperItem, Button } from "@tarojs/components";
-import { AtTabBar, AtSearchBar, AtIcon, AtButton } from "taro-ui";
+import { View, Button } from "@tarojs/components";
+import { AtTabBar } from "taro-ui";
 import { connect } from "../../utils/connect";
-import classnames from "classnames";
 import CLoading from "../../components/CLoading";
-import CMusic from "../../components/CMusic";
 import api from "../../services/api";
-// import { injectPlaySong } from "../../utils/decorators";
-import { songType } from "../../constants/commonType";
 import {
   getRecommendPlayList,
   getRecommendDj,
@@ -59,6 +55,7 @@ type PageState = {
     targetId: number;
   }>;
   searchValue: string;
+  phoneNumber: string | null;
 };
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps;
@@ -68,31 +65,31 @@ interface Index {
 }
 
 @connect(({ song }) => ({
-    song: song,
-    recommendPlayList: song.recommendPlayList,
-    recommendDj: song.recommendDj,
-    recommendNewSong: song.recommendNewSong,
-    recommend: song.recommend
-  }),
-  (dispatch) => ({
-    getRecommendPlayList() {
-      dispatch(getRecommendPlayList());
-    },
-    getRecommendDj() {
-      dispatch(getRecommendDj());
-    },
-    getRecommendNewSong() {
-      dispatch(getRecommendNewSong());
-    },
-    getRecommend() {
-      dispatch(getRecommend());
-    },
-    getSongInfo(object) {
-      dispatch(getSongInfo(object));
-    },
-    updatePlayStatus(object) {
-      dispatch(updatePlayStatus(object));
-    }
+  song: song,
+  recommendPlayList: song.recommendPlayList,
+  recommendDj: song.recommendDj,
+  recommendNewSong: song.recommendNewSong,
+  recommend: song.recommend
+}),
+(dispatch) => ({
+  getRecommendPlayList() {
+    dispatch(getRecommendPlayList());
+  },
+  getRecommendDj() {
+    dispatch(getRecommendDj());
+  },
+  getRecommendNewSong() {
+    dispatch(getRecommendNewSong());
+  },
+  getRecommend() {
+    dispatch(getRecommend());
+  },
+  getSongInfo(object) {
+    dispatch(getSongInfo(object));
+  },
+  updatePlayStatus(object) {
+    dispatch(updatePlayStatus(object));
+  }
 }))
 class Index extends Component<IProps, PageState> {
   constructor(props) {
@@ -101,12 +98,12 @@ class Index extends Component<IProps, PageState> {
       current: 0,
       showLoading: true,
       bannerList: [],
-      searchValue: ""
+      searchValue: "",
+      phoneNumber: null
     };
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log(this.props, nextProps);
     this.setState({
       showLoading: false
     });
@@ -174,38 +171,12 @@ class Index extends Component<IProps, PageState> {
         type: 1
       })
       .then(({ data }) => {
-        console.log("banner", data);
         if (data.banners) {
           this.setState({
             bannerList: data.banners
           });
         }
       });
-  }
-
-  goSearch() {
-    Taro.navigateTo({
-      url: `/pages/packageA/pages/search/index`
-    });
-  }
-
-  goDetail(item) {
-    Taro.navigateTo({
-      url: `/pages/packageA/pages/playListDetail/index?id=${item.id}&name=${item.name}`
-    });
-  }
-
-  goPage() {
-    Taro.showToast({
-      title: "正在开发中，敬请期待",
-      icon: "none"
-    });
-  }
-
-  goDjDetail(item) {
-    Taro.navigateTo({
-      url: `/pages/packageA/pages/djprogramListDetail/index?id=${item.id}&name=${item.name}`
-    });
   }
 
   removeLoading() {
@@ -218,15 +189,38 @@ class Index extends Component<IProps, PageState> {
     Taro.navigateTo({
       url: url
     });
-  }
+  };
+
+  onGetPhoneNumber = (e) => {
+    if (e.detail.errMsg === 'getPhoneNumber:ok') {
+      const { encryptedData, iv } = e.detail;
+      Taro.showModal({
+        title: '手机号',
+        content: `获取到的手机号加密数据：${encryptedData}\n解密向服务端获取`,
+        showCancel: false,
+      });
+      this.setState({ phoneNumber: '12345678901' }); // 示例解密结果
+    } else {
+      Taro.showToast({ title: '获取手机号失败', icon: 'none' });
+    }
+  };
 
   render() {
-    const { showLoading } = this.state;
+    const { showLoading, phoneNumber } = this.state;
 
     return (
       <View>
         <CLoading fullPage={true} hide={!showLoading} />
-        这是首页
+        这是首页23
+
+        {phoneNumber ? (
+          <Text>手机号: {phoneNumber}</Text>
+        ) : (
+          <Button openType="getPhoneNumber" onGetPhoneNumber={this.onGetPhoneNumber}>
+            微信账号一键登录
+          </Button>
+        )}
+
         {[
           { url: '/pages/packageA/pages/videoDetail/index', label: 'VideoDetail' },
           { url: '/pages/packageA/pages/djprogramListDetail/index', label: 'DjprogramListDetail' },
