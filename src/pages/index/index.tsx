@@ -1,6 +1,6 @@
 import Taro from "@tarojs/taro";
 import { Component } from "react";
-import { View, Button } from "@tarojs/components";
+import { View, Button, Text } from "@tarojs/components";
 import { AtTabBar } from "taro-ui";
 import { connect } from "../../utils/connect";
 import CLoading from "../../components/CLoading";
@@ -56,6 +56,7 @@ type PageState = {
   }>;
   searchValue: string;
   phoneNumber: string | null;
+  code: string | null;
 };
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps;
@@ -99,7 +100,8 @@ class Index extends Component<IProps, PageState> {
       showLoading: true,
       bannerList: [],
       searchValue: "",
-      phoneNumber: null
+      phoneNumber: null,
+      code: null,
     };
   }
 
@@ -205,22 +207,43 @@ class Index extends Component<IProps, PageState> {
     }
   };
 
+  onLogin = () => {
+    Taro.login({
+      success: (res) => {
+        if (res.code) {
+          Taro.showModal({
+            title: '登录成功',
+            content: `获取到的 code：${res.code}`,
+            showCancel: false,
+          });
+          this.setState({ code: res.code });
+        } else {
+          Taro.showToast({ title: '登录失败', icon: 'none' });
+        }
+      },
+      fail: () => {
+        Taro.showToast({ title: '登录失败', icon: 'none' });
+      }
+    });
+  };
+
   render() {
-    const { showLoading, phoneNumber } = this.state;
+    const { showLoading, phoneNumber, code } = this.state;
 
     return (
       <View>
         <CLoading fullPage={true} hide={!showLoading} />
         这是首页23
-        
 
         {phoneNumber ? (
           <Text>手机号: {phoneNumber}</Text>
         ) : (
           <Button openType="getPhoneNumber" onGetPhoneNumber={this.onGetPhoneNumber}>
-            微信账号一键登录
+            获取微信手机号
           </Button>
         )}
+
+        <Button onClick={this.onLogin}>微信登录（输出code）</Button>
 
         {[
           { url: '/pages/packageA/pages/videoDetail/index', label: 'VideoDetail' },

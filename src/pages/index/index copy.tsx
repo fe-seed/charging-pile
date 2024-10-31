@@ -1,14 +1,10 @@
 import Taro from "@tarojs/taro";
 import { Component } from "react";
-import { View, Image, Text, Swiper, SwiperItem, Button } from "@tarojs/components";
-import { AtTabBar, AtSearchBar, AtIcon, AtButton } from "taro-ui";
+import { View, Button, Text } from "@tarojs/components";
+import { AtTabBar } from "taro-ui";
 import { connect } from "../../utils/connect";
-import classnames from "classnames";
 import CLoading from "../../components/CLoading";
-import CMusic from "../../components/CMusic";
 import api from "../../services/api";
-// import { injectPlaySong } from "../../utils/decorators";
-import { songType } from "../../constants/commonType";
 import {
   getRecommendPlayList,
   getRecommendDj,
@@ -19,14 +15,6 @@ import {
 } from "../../actions/song";
 
 import "./index.scss";
-
-// #region 书写注意
-//
-// 目前 typescript 版本还无法在装饰器模式下将 Props 注入到 Taro.Component 中的 props 属性
-// 需要显示声明 connect 的参数类型并通过 interface 的方式指定 Taro.Component 子类的 props
-// 这样才能完成类型检查和 IDE 的自动提示
-// 使用函数模式则无此限制
-// ref: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/20796
 
 type PageStateProps = {
   song: songType;
@@ -67,6 +55,8 @@ type PageState = {
     targetId: number;
   }>;
   searchValue: string;
+  phoneNumber: string | null;
+  code: string | null;
 };
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps;
@@ -75,33 +65,32 @@ interface Index {
   props: IProps;
 }
 
-// @injectPlaySong()
 @connect(({ song }) => ({
-    song: song,
-    recommendPlayList: song.recommendPlayList,
-    recommendDj: song.recommendDj,
-    recommendNewSong: song.recommendNewSong,
-    recommend: song.recommend
-  }),
-  (dispatch) => ({
-    getRecommendPlayList() {
-      dispatch(getRecommendPlayList());
-    },
-    getRecommendDj() {
-      dispatch(getRecommendDj());
-    },
-    getRecommendNewSong() {
-      dispatch(getRecommendNewSong());
-    },
-    getRecommend() {
-      dispatch(getRecommend());
-    },
-    getSongInfo(object) {
-      dispatch(getSongInfo(object));
-    },
-    updatePlayStatus(object) {
-      dispatch(updatePlayStatus(object));
-    }
+  song: song,
+  recommendPlayList: song.recommendPlayList,
+  recommendDj: song.recommendDj,
+  recommendNewSong: song.recommendNewSong,
+  recommend: song.recommend
+}),
+(dispatch) => ({
+  getRecommendPlayList() {
+    dispatch(getRecommendPlayList());
+  },
+  getRecommendDj() {
+    dispatch(getRecommendDj());
+  },
+  getRecommendNewSong() {
+    dispatch(getRecommendNewSong());
+  },
+  getRecommend() {
+    dispatch(getRecommend());
+  },
+  getSongInfo(object) {
+    dispatch(getSongInfo(object));
+  },
+  updatePlayStatus(object) {
+    dispatch(updatePlayStatus(object));
+  }
 }))
 class Index extends Component<IProps, PageState> {
   constructor(props) {
@@ -110,12 +99,13 @@ class Index extends Component<IProps, PageState> {
       current: 0,
       showLoading: true,
       bannerList: [],
-      searchValue: ""
+      searchValue: "",
+      phoneNumber: null,
+      code: null,
     };
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log(this.props, nextProps);
     this.setState({
       showLoading: false
     });
@@ -140,7 +130,6 @@ class Index extends Component<IProps, PageState> {
   }
 
   switchTab(value) {
-  
     switch (value) {
       case 0:
         Taro.reLaunch({
@@ -157,37 +146,23 @@ class Index extends Component<IProps, PageState> {
           url: "/pages/my/index"
         });
         break;
-    
       default:
         break;
     }
-    
   }
 
-  /**
-   * 获取推荐歌单
-   */
   getPersonalized() {
     this.props.getRecommendPlayList();
   }
 
-  /**
-   * 获取推荐新音乐
-   */
   getNewsong() {
     this.props.getRecommendNewSong();
   }
 
-  /**
-   * 获取推荐电台
-   */
   getDjprogram() {
     this.props.getRecommendDj();
   }
 
-  /**
-   * 获取推荐节目
-   */
   getRecommend() {
     this.props.getRecommend();
   }
@@ -198,7 +173,6 @@ class Index extends Component<IProps, PageState> {
         type: 1
       })
       .then(({ data }) => {
-        console.log("banner", data);
         if (data.banners) {
           this.setState({
             bannerList: data.banners
@@ -207,59 +181,85 @@ class Index extends Component<IProps, PageState> {
       });
   }
 
-  goSearch() {
-    Taro.navigateTo({
-      url: `/pages/packageA/pages/search/index`
-    });
-  }
-
-  goDetail(item) {
-    Taro.navigateTo({
-      url: `/pages/packageA/pages/playListDetail/index?id=${item.id}&name=${item.name}`
-    });
-  }
-
-  goPage() {
-    // Taro.navigateTo({
-    //   url: `/pages/${pageName}/index`
-    // })
-    Taro.showToast({
-      title: "正在开发中，敬请期待",
-      icon: "none"
-    });
-  }
-
-  goDjDetail(item) {
-    // Taro.showToast({
-    //   title: '暂未实现，敬请期待',
-    //   icon: 'none'
-    // })
-    Taro.navigateTo({
-      url: `/pages/packageA/pages/djprogramListDetail/index?id=${item.id}&name=${item.name}`
-    });
-  }
-
   removeLoading() {
     this.setState({
       showLoading: false
     });
   }
 
-  navigateToMy = () => {
+  navigateToPage = (url) => {
     Taro.navigateTo({
-      url: '/pages/my/index'
+      url: url
     });
-  }
+  };
+
+  onGetPhoneNumber = (e) => {
+    if (e.detail.errMsg === 'getPhoneNumber:ok') {
+      const { encryptedData, iv } = e.detail;
+      Taro.showModal({
+        title: '手机号',
+        content: `获取到的手机号加密数据：${encryptedData}\n解密向服务端获取`,
+        showCancel: false,
+      });
+      this.setState({ phoneNumber: '12345678901' }); // 示例解密结果
+    } else {
+      Taro.showToast({ title: '获取手机号失败', icon: 'none' });
+    }
+  };
+
+  onLogin = () => {
+    Taro.login({
+      success: (res) => {
+        if (res.code) {
+          Taro.showModal({
+            title: '登录成功',
+            content: `获取到的 code：${res.code}`,
+            showCancel: false,
+          });
+          this.setState({ code: res.code });
+        } else {
+          Taro.showToast({ title: '登录失败', icon: 'none' });
+        }
+      },
+      fail: () => {
+        Taro.showToast({ title: '登录失败', icon: 'none' });
+      }
+    });
+  };
+
   render() {
-     
-    const { showLoading } = this.state;
-     
+    const { showLoading, phoneNumber, code } = this.state;
+
     return (
       <View>
         <CLoading fullPage={true} hide={!showLoading} />
-        这是首页1234
-        
-        <Button onClick={this.navigateToMy.bind(this)}>Navigate To My</Button>
+        这是首页23
+
+        {phoneNumber ? (
+          <Text>手机号: {phoneNumber}</Text>
+        ) : (
+          <Button openType="getPhoneNumber" onGetPhoneNumber={this.onGetPhoneNumber}>
+            微信账号一键登录
+          </Button>
+        )}
+
+        <Button onClick={this.onLogin}>微信登录</Button>
+
+        {[
+          { url: '/pages/packageA/pages/videoDetail/index', label: 'VideoDetail' },
+          { url: '/pages/packageA/pages/djprogramListDetail/index', label: 'DjprogramListDetail' },
+          { url: '/pages/packageA/pages/search/index', label: 'Search' },
+          { url: '/pages/packageA/pages/searchResult/index', label: 'SearchResult' },
+          { url: '/pages/packageA/pages/songDetail/index', label: 'SongDetail' },
+          { url: '/pages/packageA/pages/playListDetail/index', label: 'PlayListDetail' },
+          { url: '/pages/packageA/pages/login/index', label: 'Login' },
+          { url: '/pages/packageA/pages/myFans/index', label: 'MyFans' },
+          { url: '/pages/packageA/pages/myFocus/index', label: 'MyFocus' },
+          { url: '/pages/packageA/pages/myEvents/index', label: 'MyEvents' },
+          { url: '/pages/packageA/pages/recentPlay/index', label: 'RecentPlay' }
+        ].map((page, index) => (
+          <Button key={index} onClick={() => this.navigateToPage(page.url)}>{page.label}</Button>
+        ))}
         
         <AtTabBar
           fixed
